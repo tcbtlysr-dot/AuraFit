@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AuraFit — Telefon Önizleme</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="stage">
+    <header class="stage-label">
+      <span class="dot"></span>
+      localhost:5500 · iPhone 14 Pro
+    </header>
+
+    <div class="phone">
+      <div class="phone-bezel">
+        <div class="dynamic-island" aria-hidden="true"></div>
+        <div class="phone-screen" id="app">
+          <div class="status-bar">
+            <span class="time">9:41</span>
+            <div class="status-icons">
+              <span class="signal"></span>
+              <span class="wifi"></span>
+              <span class="battery"></span>
+            </div>
+          </div>
+
+          <main class="screen screen-kesfet" id="screen-kesfet" data-screen="kesfet">
+            <div class="kesfet-weather" id="weather-card">
+              <p class="kesfet-weather-line">
+                <span id="weather-city">Şehir seçilmedi</span>
+                <span class="kesfet-weather-sep">·</span>
+                <span id="weather-temp">—°</span>
+                <span class="kesfet-weather-sep">·</span>
+                <span id="weather-desc">Profil’den şehir ekle</span>
+              </p>
+              <p class="weather-tip" id="weather-tip">Hava, kombin önerilerini etkiler.</p>
+            </div>
+
+            <p class="brand">AuraFit</p>
+            <h1 class="headline">Gardrobundan<br />kombin kur</h1>
+            <p class="sub">Dolaba kıyafetlerini fotoğrafla; AuraFit yakışan kombinleri otomatik önerir.</p>
+            <button type="button" class="cta" data-go="dolap">Dolaba git</button>
+            <p class="kesfet-note">AuraFit uygulamamızı Play Store’dan değerlendirirseniz çok seviniriz. 💜</p>
+          </main>
+
+          <main class="screen screen-dolap hidden" id="screen-dolap" data-screen="dolap">
+            <header class="page-header">
+              <div>
+                <p class="brand brand-inline">Dolap</p>
+                <h1 class="page-title">Kıyafetlerim</h1>
+              </div>
+              <p class="item-count" id="total-count">0 parça</p>
+            </header>
+
+            <p class="page-hint">Kategori seç, fotoğraf çek — her kıyafeti ayrı ekle.</p>
+
+            <div class="category-scroll">
+              <div class="category-chips" id="category-chips" role="tablist" aria-label="Kıyafet kategorileri"></div>
+            </div>
+
+            <section class="category-panel" aria-live="polite">
+              <div class="panel-top">
+                <h2 class="panel-title" id="active-category-label">Tişört</h2>
+                <button type="button" class="capture-btn" id="capture-btn">
+                  <span class="capture-icon" aria-hidden="true"></span>
+                  Fotoğraf çek
+                </button>
+              </div>
+
+              <input
+                type="file"
+                id="camera-input"
+                accept="image/*"
+                capture="environment"
+                hidden
+              />
+
+              <div class="items-grid" id="items-grid"></div>
+              <p class="empty-state" id="empty-state">Henüz fotoğraf yok. Yukarıdan çekerek ekle.</p>
+            </section>
+          </main>
+
+          <main class="screen screen-kombin hidden" id="screen-kombin" data-screen="kombin">
+            <header class="page-header">
+              <div>
+                <p class="brand brand-inline">Kombin</p>
+                <h1 class="page-title">Öneriler</h1>
+              </div>
+              <button type="button" class="refresh-btn" id="refresh-outfits" aria-label="Yenile">
+                Yenile
+              </button>
+            </header>
+
+            <div class="event-chips" id="event-chips" role="tablist" aria-label="Etkinlik">
+              <button type="button" class="chip active" data-event="gunluk">Günlük</button>
+              <button type="button" class="chip" data-event="is">İş</button>
+              <button type="button" class="chip" data-event="ozel">Özel gün</button>
+              <button type="button" class="chip" data-filter="favorites">Favoriler</button>
+            </div>
+
+            <p class="page-hint" id="outfit-hint">
+              Renk uyumu + profiline göre birbirine yakışan otomatik kombinler.
+            </p>
+
+            <div class="outfit-list" id="outfit-list"></div>
+            <p class="empty-state" id="outfit-empty">
+              En az bir üst (tişört/gömlek/sweatshirt) ve bir alt (pantolon/etek) veya bir elbise ekle.
+            </p>
+
+            <section class="shop-notes" id="shop-notes">
+              <h2 class="profile-label">Alışveriş notları</h2>
+              <div id="shop-notes-list"></div>
+            </section>
+          </main>
+
+          <main class="screen screen-profil hidden" id="screen-profil" data-screen="profil">
+            <header class="page-header">
+              <div>
+                <p class="brand brand-inline">Profil</p>
+                <h1 class="page-title">Tercihlerim</h1>
+              </div>
+            </header>
+
+            <div class="auth-bar" id="auth-bar"></div>
+            <div id="google-btn-host" class="google-btn-host hidden"></div>
+
+            <p class="page-hint">Cinsiyet, boy, kilo, ten ve şehrin önerileri kişiselleştirir.</p>
+
+            <section class="profile-section">
+              <h2 class="profile-label">Bildirim</h2>
+              <label class="notify-row">
+                <span>Sabah hava + günün kombini</span>
+                <input type="checkbox" id="notify-toggle" />
+              </label>
+              <p class="city-hint" id="notify-hint">Açıkken her sabah bir hatırlatma gönderilir.</p>
+            </section>
+
+            <section class="profile-section">
+              <h2 class="profile-label">Şehir</h2>
+              <div class="city-row">
+                <input
+                  type="text"
+                  id="city-input"
+                  class="city-input"
+                  placeholder="Örn. İstanbul, Ankara, İzmir"
+                  autocomplete="address-level2"
+                />
+                <button type="button" class="capture-btn" id="save-city-btn">Kaydet</button>
+              </div>
+              <p class="city-hint" id="city-hint">Hava durumuna göre kombin önerilir.</p>
+            </section>
+
+            <section class="profile-section">
+              <h2 class="profile-label">Cinsiyet</h2>
+              <div class="gender-row" id="gender-options" role="radiogroup" aria-label="Cinsiyet">
+                <button type="button" class="chip" data-gender="kiz">Kız</button>
+                <button type="button" class="chip" data-gender="erkek">Erkek</button>
+              </div>
+            </section>
+
+            <section class="profile-section">
+              <h2 class="profile-label">Boy &amp; kilo</h2>
+              <div class="stats-row">
+                <label class="stat-field">
+                  <span>Boy (cm)</span>
+                  <input type="number" id="height-input" class="city-input" min="100" max="230" placeholder="165" inputmode="numeric" />
+                </label>
+                <label class="stat-field">
+                  <span>Kilo (kg)</span>
+                  <input type="number" id="weight-input" class="city-input" min="30" max="250" placeholder="55" inputmode="numeric" />
+                </label>
+                <button type="button" class="capture-btn" id="save-stats-btn">Kaydet</button>
+              </div>
+            </section>
+
+            <section class="profile-section">
+              <h2 class="profile-label">Ten rengi</h2>
+              <div class="tone-grid" id="skin-tone-options" role="radiogroup" aria-label="Ten rengi"></div>
+            </section>
+
+            <section class="profile-section">
+              <h2 class="profile-label">Vücut tipi</h2>
+              <div class="body-grid" id="body-type-options" role="radiogroup" aria-label="Vücut tipi"></div>
+            </section>
+
+            <p class="profile-note" id="profile-note">Seçimlerin kaydedilir; Keşfet ve Kombin’de kullanılır.</p>
+          </main>
+
+          <nav class="tab-bar" aria-label="Alt menü">
+            <button type="button" class="tab active" data-tab="kesfet">Keşfet</button>
+            <button type="button" class="tab" data-tab="dolap">Dolap</button>
+            <button type="button" class="tab" data-tab="kombin">Kombin</button>
+            <button type="button" class="tab" data-tab="profil">Profil</button>
+          </nav>
+
+          <div class="app-toast hidden" id="app-toast" role="status"></div>
+        </div>
+      </div>
+      <div class="phone-shadow" aria-hidden="true"></div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
