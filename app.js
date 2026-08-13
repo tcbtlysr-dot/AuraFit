@@ -1900,17 +1900,17 @@ async function shareOutfit(id) {
   const ctx = canvas.getContext("2d");
 
   const grd = ctx.createLinearGradient(0, 0, w, h);
-  grd.addColorStop(0, "#f7f2fc");
-  grd.addColorStop(1, "#e8d9f7");
+  grd.addColorStop(0, "#faf7f8");
+  grd.addColorStop(1, "#f0e4e8");
   ctx.fillStyle = grd;
   ctx.fillRect(0, 0, w, h);
 
-  ctx.fillStyle = "#4a3572";
-  ctx.font = "600 28px Fredoka, sans-serif";
+  ctx.fillStyle = "#2a1a22";
+  ctx.font = "600 32px 'Cormorant Garamond', Georgia, serif";
   ctx.fillText("AuraFit", pad, pad + 28);
-  ctx.font = "600 20px Nunito, sans-serif";
-  ctx.fillStyle = "#8e7aa8";
-  ctx.fillText(outfitDisplayName(outfit), pad, pad + 56);
+  ctx.font = "italic 500 22px 'Cormorant Garamond', Georgia, serif";
+  ctx.fillStyle = "#8a7380";
+  ctx.fillText(outfitDisplayName(outfit), pad, pad + 58);
 
   let x = pad;
   for (const piece of outfit.pieces) {
@@ -1934,8 +1934,8 @@ async function shareOutfit(id) {
     x += pieceW + 12;
   }
 
-  ctx.fillStyle = "#7a4fb0";
-  ctx.font = "600 16px Nunito, sans-serif";
+  ctx.fillStyle = "#c4788a";
+  ctx.font = "500 15px Outfit, sans-serif";
   ctx.fillText(`Uyum %${outfit.score}`, pad, h - 24);
 
   const blob = await new Promise((resolve) => canvas.toBlob(resolve, "image/png"));
