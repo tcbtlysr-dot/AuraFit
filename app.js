@@ -46,14 +46,104 @@ const BODY_TYPES = [
   },
 ];
 
+const STYLE_PROFILES = [
+  { id: "minimal", label: "Minimal", desc: "Sade çizgiler, nötr palet, az parça çok stil." },
+  { id: "sportif", label: "Sportif", desc: "Rahat kesim, sneaker ve fonksiyonel parçalar." },
+  { id: "klasik", label: "Klasik", desc: "Zamansız parçalar, gömlek-ceket, düzenli siluet." },
+  { id: "bohem", label: "Bohem", desc: "Akışkan form, desen ve katmanlı rahat kombinler." },
+  { id: "sokak", label: "Sokak", desc: "Oversize siluet, sneaker ve trend parçalar." },
+  { id: "zarif", label: "Zarif", desc: "Şık detay, uyumlu palet, özel gün kombinleri." },
+];
+
+const STYLE_QUIZ = [
+  {
+    question: "Boş bir günde seni en iyi anlatan?",
+    options: [
+      { text: "Sade tişört, temiz sneaker", styles: { minimal: 3, sportif: 1 } },
+      { text: "Spor ayakkabı, rahat parçalar", styles: { sportif: 3, sokak: 1 } },
+      { text: "Gömlek veya blazer", styles: { klasik: 3, zarif: 1 } },
+      { text: "Desenli, katmanlı parçalar", styles: { bohem: 3, sokak: 1 } },
+    ],
+  },
+  {
+    question: "Dolabında en çok hangisi var?",
+    options: [
+      { text: "Siyah, beyaz, gri", styles: { minimal: 3, klasik: 1 } },
+      { text: "Sweatshirt, sneaker", styles: { sportif: 3, sokak: 1 } },
+      { text: "Gömlek, ceket, pantolon", styles: { klasik: 3, minimal: 1 } },
+      { text: "Elbise, etek, aksesuar", styles: { zarif: 3, bohem: 1 } },
+    ],
+  },
+  {
+    question: "Renk tercihin daha çok?",
+    options: [
+      { text: "Nötr ve sade", styles: { minimal: 3, klasik: 1 } },
+      { text: "Canlı ve kontrast", styles: { sokak: 3, sportif: 1 } },
+      { text: "Pastel ve yumuşak", styles: { bohem: 2, zarif: 2 } },
+      { text: "Koyu, klasik tonlar", styles: { klasik: 3, zarif: 1 } },
+    ],
+  },
+  {
+    question: "İş / okul stilin?",
+    options: [
+      { text: "Basic tişört–pantolon", styles: { minimal: 2, sportif: 2 } },
+      { text: "Smart casual", styles: { klasik: 2, minimal: 1, zarif: 1 } },
+      { text: "Takım veya ceketli", styles: { klasik: 3, zarif: 2 } },
+      { text: "Kuralları esneten karışık", styles: { bohem: 2, sokak: 2 } },
+    ],
+  },
+];
+
+const COLOR_BUCKETS = [
+  { id: "black", label: "Siyah / koyu", hex: "#2a2438" },
+  { id: "neutral", label: "Gri / nötr", hex: "#9a929e" },
+  { id: "light", label: "Beyaz / krem", hex: "#f4efe8" },
+  { id: "blue", label: "Mavi", hex: "#5b8fd4" },
+  { id: "green", label: "Yeşil", hex: "#5fa86a" },
+  { id: "red", label: "Kırmızı / pembe", hex: "#d46b7a" },
+  { id: "warm", label: "Turuncu / sarı", hex: "#e0a84a" },
+  { id: "purple", label: "Mor", hex: "#9b6fd4" },
+  { id: "brown", label: "Kahve / bej", hex: "#a67c52" },
+];
+
+const SKIN_AVOID_TIPS = {
+  "acik-soguk": [
+    "Hardal sarı ve turuncu teni solgun gösterebilir.",
+    "Bej-yeşil (zeytin) tonları yüzden uzak durabilir.",
+    "Çok soğuk gri, tenle çarpışıp yorgun gösterebilir.",
+  ],
+  "acik-sicak": [
+    "Soluk pastel pembe teni yıkayabilir.",
+    "Açık sarı tenle karışıp cansız durabilir.",
+    "Soğuk neon tonlar (elektrik mavisi vb.) kaçının.",
+  ],
+  orta: [
+    "Çok soluk bej tenle birleşebilir — kontrast ekleyin.",
+    "Aşırı turuncu-kırmızı bazen cildi kızartır gibi gösterir.",
+    "Tam beyaz yerine krem / fildişi daha yumuşak durur.",
+  ],
+  bugday: [
+    "Soluk gri-mavi teni matlaştırabilir.",
+    "Neon sarı ve turuncu dikkatli kullanın.",
+    "Toprak tonları genelde iyi gider — pastel lavanta daha zor.",
+  ],
+  koyu: [
+    "Toz pembe ve soluk pastel tenle çarpışır.",
+    "Çok koyu kahve teni düzleştirir — altın/bej iyi gider.",
+    "Kirli beyaz yerine saf beyaf veya krem tercih edin.",
+  ],
+};
+
 const TOPS = new Set(["tisort", "gomlek", "sweatshirt"]);
 const BOTTOMS = new Set(["pantolon", "etek"]);
 const STORAGE_KEY = "kombin-dolap-v1";
 const PROFILE_KEY = "kombin-profil-v1";
 const META_KEY = "kombin-meta-v1";
 const MAX_OUTFITS = 8;
-// Google Cloud Console → OAuth 2.0 Web Client ID (localhost:5500 origin ekle)
-const GOOGLE_CLIENT_ID = "";
+// Google Cloud Console → OAuth 2.0 Web Client ID (config.js)
+const GOOGLE_CLIENT_ID = String(window.AURAFIT_CONFIG?.GOOGLE_CLIENT_ID || "").trim();
+const DRIVE_APPDATA_SCOPE = "https://www.googleapis.com/auth/drive.appdata";
+const CLOUD_BACKUP_NAME = "aurafit-backup.json";
 
 const EVENTS = [
   { id: "gunluk", label: "Günlük" },
@@ -74,6 +164,14 @@ const state = {
   weatherTimer: null,
   googleReady: false,
   showFavoritesOnly: false,
+  styleQuizStep: 0,
+  styleQuizAnswers: [],
+  cloud: {
+    accessToken: null,
+    tokenExpiry: 0,
+    fileId: null,
+    syncing: false,
+  },
 };
 
 const els = {
@@ -85,6 +183,7 @@ const els = {
   cameraInput: document.getElementById("camera-input"),
   itemsGrid: document.getElementById("items-grid"),
   emptyState: document.getElementById("empty-state"),
+  laundryHint: document.getElementById("laundry-hint"),
   totalCount: document.getElementById("total-count"),
   goButtons: document.querySelectorAll("[data-go]"),
   outfitList: document.getElementById("outfit-list"),
@@ -107,6 +206,21 @@ const els = {
   shopNotesList: document.getElementById("shop-notes-list"),
   notifyToggle: document.getElementById("notify-toggle"),
   notifyHint: document.getElementById("notify-hint"),
+  renameSheet: document.getElementById("rename-sheet"),
+  renameBackdrop: document.getElementById("rename-backdrop"),
+  renameInput: document.getElementById("rename-input"),
+  renameChips: document.getElementById("rename-chips"),
+  renameClear: document.getElementById("rename-clear"),
+  renameCancel: document.getElementById("rename-cancel"),
+  renameSave: document.getElementById("rename-save"),
+  cloudSection: document.getElementById("cloud-section"),
+  cloudHint: document.getElementById("cloud-hint"),
+  cloudStatus: document.getElementById("cloud-status"),
+  cloudBackupBtn: document.getElementById("cloud-backup-btn"),
+  cloudRestoreBtn: document.getElementById("cloud-restore-btn"),
+  styleQuizHost: document.getElementById("style-quiz-host"),
+  colorReportHost: document.getElementById("color-report-host"),
+  skinAvoidHost: document.getElementById("skin-avoid-host"),
   appToast: document.getElementById("app-toast"),
   genderOptions: document.getElementById("gender-options"),
   heightInput: document.getElementById("height-input"),
@@ -125,6 +239,7 @@ function loadItems() {
 
 function saveItems() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state.items));
+  scheduleCloudSync();
 }
 
 function loadProfile() {
@@ -139,6 +254,7 @@ function loadProfile() {
       gender: data.gender || null,
       height: data.height || null,
       weight: data.weight || null,
+      styleProfile: data.styleProfile || null,
     };
   } catch {
     return {
@@ -149,12 +265,14 @@ function loadProfile() {
       gender: null,
       height: null,
       weight: null,
+      styleProfile: null,
     };
   }
 }
 
 function saveProfile() {
   localStorage.setItem(PROFILE_KEY, JSON.stringify(state.profile));
+  scheduleCloudSync();
 }
 
 function loadMeta() {
@@ -164,23 +282,503 @@ function loadMeta() {
     return {
       favorites: Array.isArray(data.favorites) ? data.favorites : [],
       worn: data.worn && typeof data.worn === "object" ? data.worn : {},
+      names: data.names && typeof data.names === "object" ? data.names : {},
       event: data.event || "gunluk",
       notifications: Boolean(data.notifications),
       lastNotifyDate: data.lastNotifyDate || "",
+      cloudLastSyncAt: Number(data.cloudLastSyncAt) || 0,
+      cloudFileUpdatedAt: Number(data.cloudFileUpdatedAt) || 0,
     };
   } catch {
     return {
       favorites: [],
       worn: {},
+      names: {},
       event: "gunluk",
       notifications: false,
       lastNotifyDate: "",
+      cloudLastSyncAt: 0,
+      cloudFileUpdatedAt: 0,
     };
   }
 }
 
 function saveMeta() {
   localStorage.setItem(META_KEY, JSON.stringify(state.meta));
+  scheduleCloudSync();
+}
+
+let driveTokenClient = null;
+let pendingDriveTokenResolve = null;
+let pendingDriveTokenReject = null;
+
+function isGoogleUser() {
+  return state.profile.user?.provider === "google" && Boolean(state.profile.user?.sub);
+}
+
+function canCloudSync() {
+  return Boolean(GOOGLE_CLIENT_ID && isGoogleUser() && state.cloud.accessToken);
+}
+
+function scheduleCloudSync() {
+  if (!GOOGLE_CLIENT_ID || !isGoogleUser()) return;
+  clearTimeout(scheduleCloudSync._t);
+  scheduleCloudSync._t = setTimeout(() => {
+    uploadCloudBackup({ silent: true }).catch(() => {});
+  }, 3500);
+}
+
+function buildCloudBackup() {
+  const profile = state.profile;
+  return {
+    version: 1,
+    app: "AuraFit",
+    updatedAt: Date.now(),
+    items: state.items,
+    profile: {
+      skinTone: profile.skinTone,
+      bodyType: profile.bodyType,
+      city: profile.city,
+      gender: profile.gender,
+      height: profile.height,
+      weight: profile.weight,
+      styleProfile: profile.styleProfile,
+      user: profile.user,
+    },
+    meta: state.meta,
+  };
+}
+
+function applyCloudBackup(data) {
+  if (!data || !Array.isArray(data.items)) {
+    throw new Error("Geçersiz yedek dosyası");
+  }
+
+  state.items = data.items;
+  const p = data.profile || {};
+  state.profile.skinTone = p.skinTone ?? null;
+  state.profile.bodyType = p.bodyType ?? null;
+  state.profile.city = p.city || "";
+  state.profile.gender = p.gender ?? null;
+  state.profile.height = p.height ?? null;
+  state.profile.weight = p.weight ?? null;
+  state.profile.styleProfile = p.styleProfile ?? null;
+  if (p.user) state.profile.user = p.user;
+
+  const defaults = loadMeta();
+  state.meta = { ...defaults, ...(data.meta || {}) };
+  if (data.updatedAt) {
+    state.meta.cloudFileUpdatedAt = data.updatedAt;
+  }
+
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(state.items));
+  localStorage.setItem(PROFILE_KEY, JSON.stringify(state.profile));
+  localStorage.setItem(META_KEY, JSON.stringify(state.meta));
+  buildOutfits();
+  renderDolap();
+  renderOutfits();
+  renderProfile();
+  refreshKesfet();
+}
+
+function initDriveTokenClient() {
+  if (!GOOGLE_CLIENT_ID || driveTokenClient || !window.google?.accounts?.oauth2) return null;
+  driveTokenClient = google.accounts.oauth2.initTokenClient({
+    client_id: GOOGLE_CLIENT_ID,
+    scope: DRIVE_APPDATA_SCOPE,
+    callback: (resp) => {
+      if (resp.error) {
+        pendingDriveTokenReject?.(new Error(resp.error));
+        pendingDriveTokenResolve = null;
+        pendingDriveTokenReject = null;
+        return;
+      }
+      state.cloud.accessToken = resp.access_token;
+      state.cloud.tokenExpiry = Date.now() + (resp.expires_in || 3600) * 1000;
+      pendingDriveTokenResolve?.(resp.access_token);
+      pendingDriveTokenResolve = null;
+      pendingDriveTokenReject = null;
+    },
+  });
+  return driveTokenClient;
+}
+
+function requestDriveToken({ prompt = "" } = {}) {
+  return new Promise((resolve, reject) => {
+    if (!GOOGLE_CLIENT_ID) {
+      reject(new Error("Google Client ID yok"));
+      return;
+    }
+    pendingDriveTokenResolve = resolve;
+    pendingDriveTokenReject = reject;
+    const client = initDriveTokenClient();
+    if (!client) {
+      reject(new Error("Google OAuth hazır değil"));
+      pendingDriveTokenResolve = null;
+      pendingDriveTokenReject = null;
+      return;
+    }
+    client.requestAccessToken({ prompt });
+  });
+}
+
+async function ensureDriveToken({ forceConsent = false } = {}) {
+  if (!GOOGLE_CLIENT_ID) return null;
+  if (!window.google?.accounts?.oauth2) {
+    await loadGoogleScript();
+  }
+  if (state.cloud.accessToken && Date.now() < state.cloud.tokenExpiry - 60_000) {
+    return state.cloud.accessToken;
+  }
+  try {
+    return await requestDriveToken({ prompt: forceConsent ? "consent" : "" });
+  } catch {
+    if (!forceConsent) {
+      try {
+        return await requestDriveToken({ prompt: "consent" });
+      } catch {
+        return null;
+      }
+    }
+    return null;
+  }
+}
+
+async function driveApi(path, options = {}) {
+  const token = await ensureDriveToken();
+  if (!token) throw new Error("Drive erişimi yok");
+  const res = await fetch(`https://www.googleapis.com/drive/v3/${path}`, {
+    ...options,
+    headers: {
+      Authorization: `Bearer ${token}`,
+      ...(options.headers || {}),
+    },
+  });
+  if (!res.ok) {
+    const err = await res.text();
+    throw new Error(err || `Drive hatası (${res.status})`);
+  }
+  if (res.status === 204) return null;
+  const ct = res.headers.get("content-type") || "";
+  if (ct.includes("application/json")) return res.json();
+  return res.text();
+}
+
+async function findCloudBackupFile() {
+  const q = encodeURIComponent(`name='${CLOUD_BACKUP_NAME}' and trashed=false`);
+  const data = await driveApi(`files?spaces=appDataFolder&q=${q}&fields=files(id,name,modifiedTime)&pageSize=1`);
+  const file = data.files?.[0] || null;
+  state.cloud.fileId = file?.id || null;
+  return file;
+}
+
+async function downloadCloudBackup() {
+  const file = state.cloud.fileId || (await findCloudBackupFile());
+  if (!file?.id) return null;
+  state.cloud.fileId = file.id;
+  const raw = await driveApi(`files/${file.id}?alt=media`);
+  const data = typeof raw === "string" ? JSON.parse(raw) : raw;
+  if (data?.updatedAt) state.meta.cloudFileUpdatedAt = data.updatedAt;
+  return data;
+}
+
+async function uploadCloudBackup({ silent = false } = {}) {
+  if (!GOOGLE_CLIENT_ID || !isGoogleUser()) {
+    if (!silent) showToast("Önce Google ile giriş yap");
+    return false;
+  }
+
+  if (state.cloud.syncing) return false;
+  state.cloud.syncing = true;
+  renderCloudSection();
+
+  try {
+    const token = await ensureDriveToken();
+    if (!token) throw new Error("Drive izni alınamadı");
+
+    const payload = buildCloudBackup();
+    const json = JSON.stringify(payload);
+    let fileId = state.cloud.fileId;
+    if (!fileId) {
+      const existing = await findCloudBackupFile();
+      fileId = existing?.id || null;
+    }
+
+    const metadata = { name: CLOUD_BACKUP_NAME, mimeType: "application/json" };
+    const form = new FormData();
+    form.append("metadata", new Blob([JSON.stringify(metadata)], { type: "application/json" }));
+    form.append("file", new Blob([json], { type: "application/json" }));
+
+    let res;
+    if (fileId) {
+      res = await fetch(`https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=multipart`, {
+        method: "PATCH",
+        headers: { Authorization: `Bearer ${token}` },
+        body: form,
+      });
+    } else {
+      metadata.parents = ["appDataFolder"];
+      form.delete("metadata");
+      form.append("metadata", new Blob([JSON.stringify(metadata)], { type: "application/json" }));
+      res = await fetch("https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+        body: form,
+      });
+    }
+
+    if (!res.ok) throw new Error(await res.text());
+
+    const body = fileId ? { id: fileId } : await res.json();
+    state.cloud.fileId = body.id || fileId;
+    state.meta.cloudLastSyncAt = payload.updatedAt;
+    state.meta.cloudFileUpdatedAt = payload.updatedAt;
+    localStorage.setItem(META_KEY, JSON.stringify(state.meta));
+
+    if (!silent) showToast("Buluta yedeklendi");
+    return true;
+  } catch (err) {
+    if (!silent) showToast("Bulut yedek başarısız — tekrar dene");
+    console.warn("Cloud backup failed", err);
+    return false;
+  } finally {
+    state.cloud.syncing = false;
+    renderCloudSection();
+  }
+}
+
+async function restoreCloudBackup({ confirm = true } = {}) {
+  if (!GOOGLE_CLIENT_ID || !isGoogleUser()) {
+    showToast("Önce Google ile giriş yap");
+    return false;
+  }
+
+  if (confirm && !window.confirm("Buluttaki yedek yerel verinin üzerine yazılır. Devam edilsin mi?")) {
+    return false;
+  }
+
+  state.cloud.syncing = true;
+  renderCloudSection();
+
+  try {
+    const token = await ensureDriveToken({ forceConsent: true });
+    if (!token) throw new Error("Drive izni alınamadı");
+
+    const data = await downloadCloudBackup();
+    if (!data) {
+      showToast("Bulutta yedek bulunamadı");
+      return false;
+    }
+
+    applyCloudBackup(data);
+    state.meta.cloudLastSyncAt = Date.now();
+    localStorage.setItem(META_KEY, JSON.stringify(state.meta));
+    showToast("Buluttan geri yüklendi");
+    return true;
+  } catch (err) {
+    showToast("Buluttan yükleme başarısız");
+    console.warn("Cloud restore failed", err);
+    return false;
+  } finally {
+    state.cloud.syncing = false;
+    renderCloudSection();
+  }
+}
+
+async function syncCloudOnLogin() {
+  if (!GOOGLE_CLIENT_ID || !isGoogleUser()) return;
+
+  const token = await ensureDriveToken({ forceConsent: true });
+  if (!token) {
+    showToast("Drive izni verilmedi — bulut yedek manuel yapılabilir");
+    renderCloudSection();
+    return;
+  }
+
+  try {
+    const cloudData = await downloadCloudBackup();
+    const localEmpty = state.items.length === 0 && !state.profile.city && !state.profile.skinTone;
+
+    if (!cloudData) {
+      await uploadCloudBackup({ silent: true });
+      showToast("Yerel verin buluta yedeklendi");
+      return;
+    }
+
+    if (localEmpty) {
+      applyCloudBackup(cloudData);
+      state.meta.cloudLastSyncAt = Date.now();
+      localStorage.setItem(META_KEY, JSON.stringify(state.meta));
+      showToast("Buluttan otomatik geri yüklendi");
+      return;
+    }
+
+    const cloudNewer = (cloudData.updatedAt || 0) > (state.meta.cloudLastSyncAt || 0) + 60_000;
+    if (cloudNewer) {
+      showToast("Bulutta daha yeni yedek var — Profil → Buluttan yükle", 4200);
+    } else {
+      await uploadCloudBackup({ silent: true });
+      showToast("Google girişi tamam — verin bulutta");
+    }
+  } catch (err) {
+    console.warn("Cloud login sync failed", err);
+    showToast("Bulut senkronu atlandı — manuel yedekleyebilirsin");
+  } finally {
+    renderCloudSection();
+  }
+}
+
+function formatCloudTime(ts) {
+  if (!ts) return "henüz yok";
+  try {
+    return new Date(ts).toLocaleString("tr-TR", {
+      day: "numeric",
+      month: "short",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  } catch {
+    return "—";
+  }
+}
+
+function renderCloudSection() {
+  if (!els.cloudSection) return;
+
+  const googleSignedIn = isGoogleUser();
+  els.cloudSection.classList.toggle("hidden", !googleSignedIn);
+
+  if (!googleSignedIn) {
+    if (els.cloudStatus) els.cloudStatus.textContent = "";
+    return;
+  }
+
+  if (els.cloudHint) {
+    els.cloudHint.textContent = GOOGLE_CLIENT_ID
+      ? "Google Drive uygulama alanında güvenli yedek (yalnızca AuraFit erişir)."
+      : "config.js içine Google Client ID ekleyince bulut yedek açılır.";
+  }
+
+  const busy = state.cloud.syncing ? " · senkron…" : "";
+  const syncLine = state.meta.cloudLastSyncAt
+    ? `Son yedek: ${formatCloudTime(state.meta.cloudLastSyncAt)}${busy}`
+    : `Henüz buluta yedeklenmedi${busy}`;
+
+  if (els.cloudStatus) els.cloudStatus.textContent = syncLine;
+
+  if (els.cloudBackupBtn) els.cloudBackupBtn.disabled = state.cloud.syncing;
+  if (els.cloudRestoreBtn) els.cloudRestoreBtn.disabled = state.cloud.syncing;
+}
+
+const IRON_CATEGORIES = new Set(["gomlek", "ceket"]);
+
+function daysSinceWorn(item) {
+  if (!item.lastWornAt) return 0;
+  const washed = item.lastWashedAt || 0;
+  if (item.lastWornAt <= washed) return 0;
+  return Math.floor((Date.now() - item.lastWornAt) / 86400000);
+}
+
+function laundryMessage(item) {
+  if (!item.lastWornAt) return null;
+  const washed = item.lastWashedAt || 0;
+  if (item.lastWornAt <= washed) return null;
+
+  const days = daysSinceWorn(item);
+  const label = categoryLabel(item.category).toLowerCase();
+  if (days < 1) return `Bu ${label} bugün giyildi`;
+
+  let msg = `Bu ${label} ${days} gündür giyildi`;
+  if (days >= 2 && IRON_CATEGORIES.has(item.category)) {
+    msg += " · ütüle";
+  } else if (days >= 3) {
+    msg += " · yıka";
+  }
+  return msg;
+}
+
+function isLaundryTracked(item) {
+  return Boolean(item.lastWornAt && item.lastWornAt > (item.lastWashedAt || 0));
+}
+
+function markOutfitItemsWorn(outfit) {
+  const now = Date.now();
+  for (const piece of outfit.pieces) {
+    const item = state.items.find((i) => i.id === piece.id);
+    if (item) item.lastWornAt = now;
+  }
+  saveItems();
+}
+
+function markItemWashed(id) {
+  const item = state.items.find((i) => i.id === id);
+  if (!item) return;
+  item.lastWashedAt = Date.now();
+  saveItems();
+  renderDolap();
+  showToast(`${categoryLabel(item.category)} yıkandı — hatırlatıcı sıfırlandı`);
+}
+
+function escapeHtml(text) {
+  return String(text)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+function outfitDisplayName(outfit) {
+  const custom = state.meta.names?.[outfit.id];
+  if (custom && String(custom).trim()) return String(custom).trim();
+  return outfit.title;
+}
+
+function setOutfitName(id, name) {
+  const trimmed = String(name || "").trim().slice(0, 40);
+  if (!trimmed) {
+    delete state.meta.names[id];
+    saveMeta();
+    return "";
+  }
+  state.meta.names[id] = trimmed;
+  saveMeta();
+  return trimmed;
+}
+
+let renameOutfitId = null;
+
+function openRenameSheet(id) {
+  const outfit = state.outfits.find((o) => o.id === id);
+  if (!outfit || !els.renameSheet) return;
+  renameOutfitId = id;
+  els.renameInput.value = state.meta.names[id] || outfitDisplayName(outfit);
+  els.renameSheet.classList.remove("hidden");
+  requestAnimationFrame(() => {
+    els.renameInput.focus();
+    els.renameInput.select();
+  });
+}
+
+function closeRenameSheet() {
+  renameOutfitId = null;
+  els.renameSheet?.classList.add("hidden");
+}
+
+function saveRenameFromSheet() {
+  if (!renameOutfitId) return;
+  const outfit = state.outfits.find((o) => o.id === renameOutfitId);
+  const value = els.renameInput.value.trim();
+  const autoTitle = outfit?.title || "";
+  if (!value || value === autoTitle) {
+    delete state.meta.names[renameOutfitId];
+    saveMeta();
+    showToast("Otomatik isim kullanılıyor");
+  } else {
+    setOutfitName(renameOutfitId, value);
+    showToast(`Kombin adı: ${value}`);
+  }
+  closeRenameSheet();
+  renderOutfits();
 }
 
 function showToast(message, ms = 2800) {
@@ -206,6 +804,127 @@ function colorNameFromHsl(color) {
   if (h < 260) return "mavi";
   if (h < 290) return "mor";
   return "pembe";
+}
+
+function colorBucket(color) {
+  if (!color) return "neutral";
+  if (isNeutral(color)) {
+    if (color.l > 0.78) return "light";
+    if (color.l < 0.22) return "black";
+    return "neutral";
+  }
+  const h = color.h;
+  if (h < 20 || h >= 340) return "red";
+  if (h < 45) return "warm";
+  if (h < 70) return "warm";
+  if (h < 160) return "green";
+  if (h < 200) return "blue";
+  if (h < 260) return "blue";
+  if (h < 290) return "purple";
+  if (h < 340) return "red";
+  return "brown";
+}
+
+function wardrobeColorStats() {
+  const counts = Object.fromEntries(COLOR_BUCKETS.map((b) => [b.id, 0]));
+  for (const item of state.items) {
+    const bucket = colorBucket(item.color);
+    counts[bucket] = (counts[bucket] || 0) + 1;
+  }
+  const total = state.items.length || 1;
+  return COLOR_BUCKETS.map((bucket) => ({
+    ...bucket,
+    count: counts[bucket.id] || 0,
+    pct: Math.round(((counts[bucket.id] || 0) / total) * 100),
+  })).filter((b) => b.count > 0);
+}
+
+function computeStyleProfileFromAnswers(answers) {
+  const scores = Object.fromEntries(STYLE_PROFILES.map((s) => [s.id, 0]));
+  answers.forEach((optionIndex, qIndex) => {
+    const question = STYLE_QUIZ[qIndex];
+    const option = question?.options[optionIndex];
+    if (!option?.styles) return;
+    for (const [styleId, pts] of Object.entries(option.styles)) {
+      scores[styleId] = (scores[styleId] || 0) + pts;
+    }
+  });
+  let bestId = STYLE_PROFILES[0].id;
+  let bestScore = -1;
+  for (const style of STYLE_PROFILES) {
+    if ((scores[style.id] || 0) > bestScore) {
+      bestScore = scores[style.id];
+      bestId = style.id;
+    }
+  }
+  return bestId;
+}
+
+function styleMatchScore(pieces) {
+  const styleId = state.profile.styleProfile;
+  if (!styleId || !pieces.length) return { score: 70, tags: [] };
+
+  const cats = new Set(pieces.map((p) => p.category));
+  const colors = pieces.map((p) => p.color).filter(Boolean);
+  const neutralCount = colors.filter((c) => isNeutral(c)).length;
+  const neutralRatio = colors.length ? neutralCount / colors.length : 0;
+  const style = STYLE_PROFILES.find((s) => s.id === styleId);
+  let score = 72;
+  const tags = [];
+
+  switch (styleId) {
+    case "minimal":
+      if (neutralRatio >= 0.45 && pieces.length <= 4) {
+        score = 93;
+        tags.push("Minimal stil");
+      } else if (neutralRatio >= 0.3) {
+        score = 82;
+      }
+      break;
+    case "sportif":
+      if (cats.has("sweatshirt") || cats.has("tisort")) {
+        score = 90;
+        tags.push("Sportif stil");
+      }
+      if (cats.has("ayakkabi")) score += 4;
+      break;
+    case "klasik":
+      if (cats.has("gomlek") || cats.has("ceket")) {
+        score = 92;
+        tags.push("Klasik stil");
+      }
+      if (cats.has("pantolon")) score += 3;
+      break;
+    case "bohem":
+      if (cats.has("elbise") || cats.has("etek") || cats.has("aksesuar")) {
+        score = 88;
+        tags.push("Bohem stil");
+      }
+      if (colors.some((c) => c && c.s > 0.35)) score += 4;
+      break;
+    case "sokak":
+      if (cats.has("sweatshirt") && cats.has("ayakkabi")) {
+        score = 91;
+        tags.push("Sokak stili");
+      } else if (cats.has("tisort") && cats.has("ayakkabi")) {
+        score = 84;
+      }
+      break;
+    case "zarif":
+      if (cats.has("elbise") || (cats.has("gomlek") && cats.has("etek"))) {
+        score = 90;
+        tags.push("Zarif stil");
+      }
+      if (cats.has("aksesuar")) score += 5;
+      break;
+    default:
+      break;
+  }
+
+  if (style && tags.length) {
+    return { score: Math.min(100, score), tags };
+  }
+  return { score, tags: style ? [] : tags };
 }
 
 function complementaryColorHint(color) {
@@ -675,52 +1394,59 @@ function totalOutfitScore(pieces, outfitId = null) {
   const color = outfitColorScore(pieces);
   const skin = skinToneMatchScore(pieces);
   const body = bodyTypeMatchScore(pieces);
+  const style = styleMatchScore(pieces);
   const metrics = bodyMetricsMatchScore(pieces);
   const weather = weatherMatchScore(pieces);
   const event = eventMatchScore(pieces);
   const bodyScore = typeof body === "object" ? body.score : body;
   const tags = [
     ...(typeof body === "object" ? body.tags : []),
+    ...style.tags,
     ...metrics.tags,
     ...weather.tags,
     ...event.tags,
   ];
 
-  const hasProfile = Boolean(state.profile.skinTone || state.profile.bodyType);
+  const hasProfile = Boolean(state.profile.skinTone || state.profile.bodyType || state.profile.styleProfile);
   const hasMetrics = Boolean(getBodyMetrics());
   const hasWeather = Boolean(state.weather?.temp != null);
 
   let score;
   if (hasProfile && hasMetrics && hasWeather) {
     score =
-      color * 0.34 +
-      skin * 0.12 +
-      bodyScore * 0.12 +
-      metrics.score * 0.14 +
-      weather.score * 0.14 +
-      event.score * 0.14;
+      color * 0.32 +
+      skin * 0.11 +
+      bodyScore * 0.11 +
+      style.score * 0.08 +
+      metrics.score * 0.13 +
+      weather.score * 0.13 +
+      event.score * 0.12;
   } else if (hasMetrics && hasWeather) {
-    score = color * 0.4 + metrics.score * 0.25 + weather.score * 0.2 + event.score * 0.15;
+    score = color * 0.38 + style.score * 0.07 + metrics.score * 0.24 + weather.score * 0.19 + event.score * 0.12;
   } else if (hasMetrics && hasProfile) {
     score =
-      color * 0.4 +
-      skin * 0.15 +
-      bodyScore * 0.15 +
-      metrics.score * 0.15 +
-      event.score * 0.15;
+      color * 0.38 +
+      skin * 0.13 +
+      bodyScore * 0.13 +
+      style.score * 0.08 +
+      metrics.score * 0.14 +
+      event.score * 0.14;
   } else if (hasMetrics) {
-    score = color * 0.55 + metrics.score * 0.25 + event.score * 0.2;
+    score = color * 0.52 + style.score * 0.08 + metrics.score * 0.24 + event.score * 0.16;
   } else if (hasProfile && hasWeather) {
     score =
-      color * 0.4 +
-      skin * 0.15 +
-      bodyScore * 0.12 +
-      weather.score * 0.15 +
-      event.score * 0.18;
+      color * 0.38 +
+      skin * 0.14 +
+      bodyScore * 0.11 +
+      style.score * 0.08 +
+      weather.score * 0.14 +
+      event.score * 0.15;
   } else if (hasWeather) {
-    score = color * 0.5 + weather.score * 0.25 + event.score * 0.25;
+    score = color * 0.47 + style.score * 0.08 + weather.score * 0.24 + event.score * 0.21;
   } else if (hasProfile) {
-    score = color * 0.45 + skin * 0.2 + bodyScore * 0.15 + event.score * 0.2;
+    score = color * 0.42 + skin * 0.18 + bodyScore * 0.14 + style.score * 0.08 + event.score * 0.18;
+  } else if (state.profile.styleProfile) {
+    score = color * 0.68 + style.score * 0.12 + event.score * 0.2;
   } else {
     score = color * 0.75 + event.score * 0.25;
   }
@@ -728,6 +1454,7 @@ function totalOutfitScore(pieces, outfitId = null) {
   if (outfitId) score -= wornPenalty(outfitId);
 
   if (state.profile.skinTone && skin >= 85) tags.push("Tene yakışır");
+  if (state.profile.styleProfile && style.score >= 88) tags.push(STYLE_PROFILES.find((s) => s.id === state.profile.styleProfile)?.label || "Stil");
   if (color >= 80) tags.push("Renk uyumu");
 
   return {
@@ -860,10 +1587,12 @@ function buildOutfits() {
 function updateOutfitHint() {
   const skin = SKIN_TONES.find((t) => t.id === state.profile.skinTone);
   const body = BODY_TYPES.find((t) => t.id === state.profile.bodyType);
+  const style = STYLE_PROFILES.find((s) => s.id === state.profile.styleProfile);
   const event = EVENTS.find((e) => e.id === state.meta.event);
   const m = getBodyMetrics();
   const parts = [];
   if (event) parts.push(event.label);
+  if (style) parts.push(style.label);
   if (m?.height) parts.push(`${m.height} cm`);
   if (m?.weight) parts.push(`${m.weight} kg`);
   if (state.weather?.temp != null) parts.push(`${state.weather.city} hava`);
@@ -951,14 +1680,21 @@ function outfitCardHtml(outfit, extraClass = "", style = "") {
   const isFav = state.meta.favorites.includes(outfit.id);
   const isWorn = Boolean(state.meta.worn[outfit.id]);
   const wornClass = isWorn ? "is-worn" : "";
+  const displayName = outfitDisplayName(outfit);
+  const hasCustomName = Boolean(state.meta.names?.[outfit.id]);
   return `
     <article class="outfit-card ${extraClass} ${wornClass}" data-outfit-id="${outfit.id}" ${
       style ? `style="${style}"` : ""
     }>
       <div class="outfit-meta">
         <div>
-          <p class="outfit-title">${outfit.title}${isWorn ? " · Giyildi" : ""}</p>
-          <p class="outfit-score">Uyum %${outfit.score} · Renk %${outfit.colorScore}</p>
+          <button type="button" class="outfit-title-btn" data-action="rename" data-id="${outfit.id}" title="İsim ver">
+            <span class="outfit-title">${escapeHtml(displayName)}${isWorn ? " · Giyildi" : ""}</span>
+            <span class="outfit-title-edit" aria-hidden="true">✎</span>
+          </button>
+          <p class="outfit-score">Uyum %${outfit.score} · Renk %${outfit.colorScore}${
+            hasCustomName ? " · Özel isim" : ""
+          }</p>
           ${
             outfit.tags?.length
               ? `<div class="outfit-tags">${outfit.tags
@@ -991,6 +1727,9 @@ function outfitCardHtml(outfit, extraClass = "", style = "") {
         </button>
         <button type="button" class="outfit-action ${isWorn ? "active" : ""}" data-action="worn" data-id="${outfit.id}">
           ${isWorn ? "Giyildi ✓" : "Giyildi"}
+        </button>
+        <button type="button" class="outfit-action" data-action="rename" data-id="${outfit.id}">
+          ✎ İsim
         </button>
         <button type="button" class="outfit-action" data-action="share" data-id="${outfit.id}">
           Paylaş
@@ -1103,7 +1842,7 @@ function buildShoppingNotes() {
     );
   }
 
-  return notes.slice(0, 4);
+  return notes.slice(0, 3);
 }
 
 function renderShoppingNotes() {
@@ -1122,16 +1861,19 @@ function toggleFavorite(id) {
 }
 
 function toggleWorn(id) {
+  const outfit = state.outfits.find((o) => o.id === id);
   if (state.meta.worn[id]) {
     delete state.meta.worn[id];
     showToast("Giyildi işareti kaldırıldı");
   } else {
     state.meta.worn[id] = Date.now();
-    showToast("Giyildi olarak işaretlendi — bir süre daha az önerilir");
+    if (outfit) markOutfitItemsWorn(outfit);
+    showToast("Giyildi — parçalar yıkama takibine eklendi");
   }
   saveMeta();
   buildOutfits();
   renderOutfits();
+  if (state.activeTab === "dolap") renderDolap();
 }
 
 function loadImageEl(src) {
@@ -1168,7 +1910,7 @@ async function shareOutfit(id) {
   ctx.fillText("AuraFit", pad, pad + 28);
   ctx.font = "600 20px Nunito, sans-serif";
   ctx.fillStyle = "#8e7aa8";
-  ctx.fillText(outfit.title, pad, pad + 56);
+  ctx.fillText(outfitDisplayName(outfit), pad, pad + 56);
 
   let x = pad;
   for (const piece of outfit.pieces) {
@@ -1205,7 +1947,7 @@ async function shareOutfit(id) {
       await navigator.share({
         files: [file],
         title: "AuraFit kombin",
-        text: `${outfit.title} · AuraFit`,
+        text: `${outfitDisplayName(outfit)} · AuraFit`,
       });
       showToast("Kombin paylaşıldı");
       return;
@@ -1261,7 +2003,7 @@ async function maybeSendMorningNotification({ force = false } = {}) {
     ? `${state.weather.city} ${state.weather.temp}° · ${state.weather.label}`
     : "Hava için şehir ekle";
   const outfitPart = daily
-    ? `Günün kombini: ${daily.title} (%${daily.score})`
+    ? `Günün kombini: ${outfitDisplayName(daily)} (%${daily.score})`
     : "Dolaba kıyafet ekleyince kombin önerilir";
   const body = `${weatherPart}\n${outfitPart}`;
 
@@ -1353,7 +2095,7 @@ function renderWeatherCard() {
   els.weatherTip.textContent = weatherTipFor(state.weather);
 }
 
-async function refreshWeather({ silent = false } = {}) {
+async function refreshWeather({ silent = false, force = false } = {}) {
   const city = state.profile.city?.trim();
   if (!city) {
     state.weather = null;
@@ -1362,12 +2104,21 @@ async function refreshWeather({ silent = false } = {}) {
   }
   if (state.weatherLoading) return;
 
+  const stale =
+    !state.weather ||
+    state.weather.city.toLowerCase() !== city.toLowerCase() ||
+    Date.now() - state.weather.fetchedAt > 60 * 1000;
+
+  if (!force && !stale) {
+    renderWeatherCard();
+    return;
+  }
+
   state.weatherLoading = true;
   if (!silent) renderWeatherCard();
   try {
     await fetchWeatherForCity(city);
   } catch {
-    // Keep last successful weather if poll fails
     if (!state.weather) state.weather = null;
   } finally {
     state.weatherLoading = false;
@@ -1398,18 +2149,29 @@ function parseJwtPayload(token) {
 
 function setUser(user) {
   state.profile.user = user;
-  saveProfile();
+  localStorage.setItem(PROFILE_KEY, JSON.stringify(state.profile));
   renderAuthBar();
   renderProfile();
+  if (user?.provider === "google") {
+    syncCloudOnLogin().catch(() => {});
+  }
 }
 
 function signOutUser() {
+  if (state.cloud.accessToken && window.google?.accounts?.oauth2) {
+    google.accounts.oauth2.revoke(state.cloud.accessToken, () => {});
+  }
+  state.cloud.accessToken = null;
+  state.cloud.tokenExpiry = 0;
+  state.cloud.fileId = null;
+  state.cloud.syncing = false;
   state.profile.user = null;
-  saveProfile();
+  localStorage.setItem(PROFILE_KEY, JSON.stringify(state.profile));
   if (window.google?.accounts?.id) {
     google.accounts.id.disableAutoSelect();
   }
   renderAuthBar();
+  renderCloudSection();
 }
 
 function gmailIconSvg() {
@@ -1419,19 +2181,32 @@ function gmailIconSvg() {
   </svg>`;
 }
 
+function renderGoogleSignInButton() {
+  if (!GOOGLE_CLIENT_ID || !els.googleBtnHost || !window.google?.accounts?.id) return;
+  els.googleBtnHost.classList.remove("hidden");
+  els.googleBtnHost.innerHTML = "";
+  google.accounts.id.renderButton(els.googleBtnHost, {
+    theme: "outline",
+    size: "large",
+    text: "signin_with",
+    shape: "pill",
+    width: Math.min(320, els.googleBtnHost.clientWidth || 300),
+  });
+}
+
 function renderAuthBar() {
   const user = state.profile.user;
   if (user) {
     const initial = (user.name || user.email || "?").trim().charAt(0).toUpperCase();
     const avatar = user.picture
-      ? `<img class="auth-avatar" src="${user.picture}" alt="" />`
-      : `<span class="auth-avatar">${initial}</span>`;
+      ? `<img class="auth-avatar" src="${escapeHtml(user.picture)}" alt="" />`
+      : `<span class="auth-avatar">${escapeHtml(initial)}</span>`;
     els.authBar.innerHTML = `
       <div class="auth-row">
         ${avatar}
         <div class="auth-meta">
-          <p class="auth-name">${user.name || "Hesap"}</p>
-          <p class="auth-email">${user.email || ""}</p>
+          <p class="auth-name">${escapeHtml(user.name || "Hesap")}</p>
+          <p class="auth-email">${escapeHtml(user.email || "")}</p>
         </div>
         <button type="button" class="auth-out" id="sign-out-btn">Çıkış</button>
       </div>
@@ -1439,25 +2214,37 @@ function renderAuthBar() {
     els.googleBtnHost.classList.add("hidden");
     els.googleBtnHost.innerHTML = "";
     document.getElementById("sign-out-btn")?.addEventListener("click", signOutUser);
+    renderCloudSection();
     return;
   }
 
-  els.authBar.innerHTML = `
-    <button type="button" class="auth-gmail-btn" id="gmail-sign-in-btn">
-      ${gmailIconSvg()}
-      Gmail ile giriş
-    </button>
-    <div class="auth-email-fallback hidden" id="auth-email-fallback">
-      <input type="email" class="city-input" id="gmail-fallback-input" placeholder="ornek@gmail.com" />
-      <button type="button" class="capture-btn" id="gmail-fallback-save">Gir</button>
-    </div>
-  `;
+  if (GOOGLE_CLIENT_ID) {
+    els.authBar.innerHTML = `
+      <p class="auth-setup-hint">Google ile giriş yap — dolabın Drive’a otomatik yedeklenir.</p>
+    `;
+    renderGoogleSignInButton();
+  } else {
+    els.authBar.innerHTML = `
+      <button type="button" class="auth-gmail-btn" id="gmail-sign-in-btn">
+        ${gmailIconSvg()}
+        Gmail ile giriş
+      </button>
+      <p class="auth-setup-hint">Gerçek Google girişi için <code>config.js</code> dosyasına Client ID ekle.</p>
+      <div class="auth-email-fallback hidden" id="auth-email-fallback">
+        <input type="email" class="city-input" id="gmail-fallback-input" placeholder="ornek@gmail.com" />
+        <button type="button" class="capture-btn" id="gmail-fallback-save">Gir</button>
+      </div>
+    `;
+    els.googleBtnHost.classList.add("hidden");
+    els.googleBtnHost.innerHTML = "";
+    document.getElementById("gmail-sign-in-btn")?.addEventListener("click", startGmailSignIn);
+    document.getElementById("gmail-fallback-save")?.addEventListener("click", submitGmailFallback);
+    document.getElementById("gmail-fallback-input")?.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") submitGmailFallback();
+    });
+  }
 
-  document.getElementById("gmail-sign-in-btn")?.addEventListener("click", startGmailSignIn);
-  document.getElementById("gmail-fallback-save")?.addEventListener("click", submitGmailFallback);
-  document.getElementById("gmail-fallback-input")?.addEventListener("keydown", (e) => {
-    if (e.key === "Enter") submitGmailFallback();
-  });
+  renderCloudSection();
 }
 
 function submitGmailFallback() {
@@ -1527,6 +2314,7 @@ async function initGoogleSignIn() {
       cancel_on_tap_outside: true,
     });
     state.googleReady = true;
+    renderGoogleSignInButton();
     return true;
   } catch {
     state.googleReady = false;
@@ -1535,31 +2323,130 @@ async function initGoogleSignIn() {
 }
 
 async function startGmailSignIn() {
-  if (GOOGLE_CLIENT_ID) {
-    const ok = state.googleReady || (await initGoogleSignIn());
-    if (ok && window.google?.accounts?.id) {
-      els.googleBtnHost.classList.remove("hidden");
-      els.googleBtnHost.innerHTML = "";
-      google.accounts.id.renderButton(els.googleBtnHost, {
-        theme: "outline",
-        size: "medium",
-        text: "signin_with",
-        shape: "pill",
-        width: 280,
-      });
-      google.accounts.id.prompt();
-      return;
-    }
-  }
-
-  // Yerel önizleme: Google Client ID yoksa kompakt Gmail e-posta girişi
   const fallback = document.getElementById("auth-email-fallback");
   fallback?.classList.toggle("hidden");
   document.getElementById("gmail-fallback-input")?.focus();
 }
 
+function renderStyleQuiz() {
+  if (!els.styleQuizHost) return;
+
+  const result = STYLE_PROFILES.find((s) => s.id === state.profile.styleProfile);
+  if (result) {
+    els.styleQuizHost.innerHTML = `
+      <div class="style-result">
+        <p class="style-result-label">Stil profilin</p>
+        <p class="style-result-name">${escapeHtml(result.label)}</p>
+        <p class="style-result-desc">${escapeHtml(result.desc)}</p>
+        <button type="button" class="capture-btn style-retake-btn" id="style-retake-btn">Testi tekrarla</button>
+      </div>
+    `;
+    document.getElementById("style-retake-btn")?.addEventListener("click", () => {
+      state.profile.styleProfile = null;
+      state.styleQuizStep = 0;
+      state.styleQuizAnswers = [];
+      saveProfile();
+      renderStyleQuiz();
+      buildOutfits();
+      renderOutfits();
+      showToast("Stil testi sıfırlandı");
+    });
+    return;
+  }
+
+  const step = state.styleQuizStep || 0;
+  const question = STYLE_QUIZ[step];
+  if (!question) {
+    state.styleQuizStep = 0;
+    state.styleQuizAnswers = [];
+    els.styleQuizHost.innerHTML = `<p class="city-hint">Test yüklenemedi — sayfayı yenile.</p>`;
+    return;
+  }
+
+  els.styleQuizHost.innerHTML = `
+    <p class="style-quiz-progress">Soru ${step + 1} / ${STYLE_QUIZ.length}</p>
+    <p class="style-quiz-q">${escapeHtml(question.question)}</p>
+    <div class="style-quiz-options">
+      ${question.options
+        .map(
+          (opt, i) =>
+            `<button type="button" class="style-quiz-opt" data-opt="${i}">${escapeHtml(opt.text)}</button>`
+        )
+        .join("")}
+    </div>
+  `;
+}
+
+function renderSkinAvoidTips() {
+  if (!els.skinAvoidHost) return;
+  const tone = SKIN_TONES.find((t) => t.id === state.profile.skinTone);
+  const tips = SKIN_AVOID_TIPS[state.profile.skinTone];
+
+  if (!tone || !tips?.length) {
+    els.skinAvoidHost.classList.add("hidden");
+    els.skinAvoidHost.innerHTML = "";
+    return;
+  }
+
+  els.skinAvoidHost.classList.remove("hidden");
+  els.skinAvoidHost.innerHTML = `
+    <p class="skin-avoid-title">${escapeHtml(tone.label)} ten — kaçın / dikkat</p>
+    <ul class="skin-avoid-list">
+      ${tips.map((tip) => `<li>${escapeHtml(tip)}</li>`).join("")}
+    </ul>
+  `;
+}
+
+function renderColorReport() {
+  if (!els.colorReportHost) return;
+
+  if (!state.items.length) {
+    els.colorReportHost.innerHTML = `<p class="city-hint">Dolaba parça ekleyince baskın renk grafiği çıkar.</p>`;
+    return;
+  }
+
+  const stats = wardrobeColorStats();
+  if (!stats.length) {
+    els.colorReportHost.innerHTML = `<p class="city-hint">Renkler analiz ediliyor…</p>`;
+    return;
+  }
+
+  const maxPct = Math.max(...stats.map((s) => s.pct), 1);
+  const top = stats[0];
+
+  els.colorReportHost.innerHTML = `
+    <p class="color-report-summary">Dolabının <strong>${escapeHtml(top.label)}</strong> ağırlıklı (%${top.pct}).</p>
+    <div class="color-chart" role="img" aria-label="Dolap renk dağılımı">
+      ${stats
+        .map(
+          (row) => `
+        <div class="color-chart-row">
+          <span class="color-chart-swatch" style="background:${row.hex}"></span>
+          <span class="color-chart-label">${escapeHtml(row.label)}</span>
+          <div class="color-chart-track">
+            <div class="color-chart-bar" style="width:${Math.max(8, (row.pct / maxPct) * 100)}%; background:${row.hex}"></div>
+          </div>
+          <span class="color-chart-pct">%${row.pct}</span>
+        </div>
+      `
+        )
+        .join("")}
+    </div>
+  `;
+}
+
+async function renderPersonalInsights() {
+  renderStyleQuiz();
+  renderSkinAvoidTips();
+  if (state.items.length) {
+    await ensureAllColors();
+  }
+  renderColorReport();
+}
+
 function renderProfile() {
   renderAuthBar();
+  renderCloudSection();
   els.cityInput.value = state.profile.city || "";
   els.cityHint.textContent = state.profile.city
     ? `${state.profile.city} için hava durumu Keşfet’te kullanılır.`
@@ -1614,6 +2501,7 @@ function renderProfile() {
 
   const skin = SKIN_TONES.find((t) => t.id === state.profile.skinTone);
   const body = BODY_TYPES.find((t) => t.id === state.profile.bodyType);
+  const style = STYLE_PROFILES.find((s) => s.id === state.profile.styleProfile);
   const bits = [];
   if (state.profile.user?.email) bits.push(state.profile.user.email);
   if (state.profile.gender === "kiz") bits.push("Kız");
@@ -1623,11 +2511,14 @@ function renderProfile() {
   if (state.profile.city) bits.push(state.profile.city);
   if (skin) bits.push(skin.label);
   if (body) bits.push(body.label);
+  if (style) bits.push(style.label);
   if (bits.length) {
     els.profileNote.textContent = `${bits.join(" · ")} kaydedildi. Öneriler buna göre güncellenir.`;
   } else {
     els.profileNote.textContent = "Seçimlerin kaydedilir; Keşfet ve Kombin’de kullanılır.";
   }
+
+  renderPersonalInsights().catch(() => {});
 }
 
 async function refreshOutfits({ reshuffle = false } = {}) {
@@ -1691,6 +2582,18 @@ function renderItems() {
   els.categoryLabel.textContent = category.label;
   els.totalCount.textContent = `${state.items.length} parça`;
 
+  const laundryItems = items.filter((i) => isLaundryTracked(i) && daysSinceWorn(i) >= 1);
+  if (laundryItems.length) {
+    els.laundryHint.classList.remove("hidden");
+    els.laundryHint.textContent = `${laundryItems.length} parça yıkama / ütü bekliyor.`;
+  } else if (items.some(isLaundryTracked)) {
+    els.laundryHint.classList.remove("hidden");
+    els.laundryHint.textContent = "Bugün giyilen parçalar takip ediliyor.";
+  } else {
+    els.laundryHint.classList.add("hidden");
+    els.laundryHint.textContent = "";
+  }
+
   if (items.length === 0) {
     els.itemsGrid.innerHTML = "";
     els.emptyState.classList.remove("hidden");
@@ -1699,21 +2602,28 @@ function renderItems() {
 
   els.emptyState.classList.add("hidden");
   els.itemsGrid.innerHTML = items
-    .map(
-      (item) => `
-      <article class="item-card" data-id="${item.id}">
+    .map((item) => {
+      const days = daysSinceWorn(item);
+      const laundry = laundryMessage(item);
+      return `
+      <article class="item-card ${days >= 3 ? "needs-laundry" : ""}" data-id="${item.id}">
         <img src="${item.dataUrl}" alt="${category.label}" />
         ${item.color?.hex ? `<span class="item-swatch" style="background:${item.color.hex}"></span>` : ""}
+        ${laundry ? `<p class="laundry-badge">${laundry}</p>` : ""}
+        ${isLaundryTracked(item) ? `<button type="button" class="item-wash" data-wash="${item.id}">Yıkandı</button>` : ""}
         <button type="button" class="item-delete" data-delete="${item.id}" aria-label="Sil">×</button>
       </article>
-    `
-    )
+    `;
+    })
     .join("");
 }
 
 function renderDolap() {
   renderChips();
   renderItems();
+  if (state.activeTab === "profil") {
+    renderPersonalInsights().catch(() => {});
+  }
 }
 
 function fileToDataUrl(file) {
@@ -1734,6 +2644,7 @@ async function addPhoto(file) {
     category: state.activeCategory,
     dataUrl,
     createdAt: Date.now(),
+    lastWashedAt: Date.now(),
   };
   await ensureItemColor(item);
   state.items.unshift(item);
@@ -1826,6 +2737,11 @@ els.cameraInput.addEventListener("change", async () => {
 });
 
 els.itemsGrid.addEventListener("click", (e) => {
+  const washBtn = e.target.closest("[data-wash]");
+  if (washBtn) {
+    markItemWashed(washBtn.dataset.wash);
+    return;
+  }
   const btn = e.target.closest("[data-delete]");
   if (!btn) return;
   deleteItem(btn.dataset.delete);
@@ -1842,6 +2758,32 @@ els.skinToneOptions.addEventListener("click", (e) => {
     state.profile.skinTone === btn.dataset.skin ? null : btn.dataset.skin;
   saveProfile();
   renderProfile();
+});
+
+els.styleQuizHost?.addEventListener("click", (e) => {
+  const opt = e.target.closest("[data-opt]");
+  if (!opt) return;
+  const index = Number(opt.dataset.opt);
+  if (Number.isNaN(index)) return;
+
+  if (!Array.isArray(state.styleQuizAnswers)) state.styleQuizAnswers = [];
+  state.styleQuizAnswers.push(index);
+  state.styleQuizStep = (state.styleQuizStep || 0) + 1;
+
+  if (state.styleQuizStep >= STYLE_QUIZ.length) {
+    state.profile.styleProfile = computeStyleProfileFromAnswers(state.styleQuizAnswers);
+    state.styleQuizStep = 0;
+    state.styleQuizAnswers = [];
+    saveProfile();
+    buildOutfits();
+    renderOutfits();
+    const label = STYLE_PROFILES.find((s) => s.id === state.profile.styleProfile)?.label || "Stil";
+    showToast(`Stil profilin: ${label}`);
+    renderProfile();
+    return;
+  }
+
+  renderStyleQuiz();
 });
 
 els.bodyTypeOptions.addEventListener("click", (e) => {
@@ -1908,7 +2850,33 @@ els.outfitList.addEventListener("click", (e) => {
   const { action, id } = btn.dataset;
   if (action === "fav") toggleFavorite(id);
   if (action === "worn") toggleWorn(id);
+  if (action === "rename") openRenameSheet(id);
   if (action === "share") shareOutfit(id);
+});
+
+els.renameBackdrop?.addEventListener("click", closeRenameSheet);
+els.renameCancel?.addEventListener("click", closeRenameSheet);
+els.renameClear?.addEventListener("click", () => {
+  if (!renameOutfitId) return;
+  delete state.meta.names[renameOutfitId];
+  saveMeta();
+  closeRenameSheet();
+  renderOutfits();
+  showToast("Otomatik isim kullanılıyor");
+});
+els.renameSave?.addEventListener("click", saveRenameFromSheet);
+els.renameInput?.addEventListener("keydown", (e) => {
+  if (e.key === "Enter") {
+    e.preventDefault();
+    saveRenameFromSheet();
+  }
+  if (e.key === "Escape") closeRenameSheet();
+});
+els.renameChips?.addEventListener("click", (e) => {
+  const chip = e.target.closest("[data-name]");
+  if (!chip || !els.renameInput) return;
+  els.renameInput.value = chip.dataset.name;
+  els.renameInput.focus();
 });
 
 els.notifyToggle?.addEventListener("change", async () => {
@@ -1964,8 +2932,23 @@ els.weightInput.addEventListener("keydown", (e) => {
   }
 });
 
-renderDolap();
-renderProfile();
-refreshKesfet();
-startWeatherPolling();
-maybeSendMorningNotification();
+els.cloudBackupBtn?.addEventListener("click", () => {
+  uploadCloudBackup().catch(() => {});
+});
+els.cloudRestoreBtn?.addEventListener("click", () => {
+  restoreCloudBackup().catch(() => {});
+});
+
+(async function boot() {
+  if (GOOGLE_CLIENT_ID) {
+    await initGoogleSignIn();
+    if (isGoogleUser()) {
+      ensureDriveToken().finally(() => renderCloudSection());
+    }
+  }
+  renderDolap();
+  renderProfile();
+  refreshKesfet();
+  startWeatherPolling();
+  maybeSendMorningNotification();
+})();

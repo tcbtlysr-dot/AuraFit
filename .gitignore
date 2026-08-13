@@ -9,3 +9,6 @@ Desktop.ini
 *.log
 *.tmp
 .cache/
+
+# Yerel Google OAuth anahtarı (config.example.js şablonunu kullan)
+config.js

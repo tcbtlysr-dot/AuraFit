@@ -30,6 +30,8 @@
           </div>
 
           <main class="screen screen-kesfet" id="screen-kesfet" data-screen="kesfet">
+            <div class="kesfet-bg-image" id="kesfet-bg-image" aria-hidden="true"></div>
+
             <div class="kesfet-weather" id="weather-card">
               <p class="kesfet-weather-line">
                 <span id="weather-city">Şehir seçilmedi</span>
@@ -71,6 +73,8 @@
                   Fotoğraf çek
                 </button>
               </div>
+
+              <p class="laundry-hint hidden" id="laundry-hint"></p>
 
               <input
                 type="file"
@@ -129,6 +133,16 @@
             <div class="auth-bar" id="auth-bar"></div>
             <div id="google-btn-host" class="google-btn-host hidden"></div>
 
+            <section class="profile-section cloud-section hidden" id="cloud-section">
+              <h2 class="profile-label">Bulut yedek</h2>
+              <p class="city-hint" id="cloud-hint">Google Drive’da güvenli yedek (yalnızca AuraFit erişir).</p>
+              <div class="cloud-actions">
+                <button type="button" class="capture-btn" id="cloud-backup-btn">Buluta yedekle</button>
+                <button type="button" class="capture-btn cloud-restore-btn" id="cloud-restore-btn">Buluttan yükle</button>
+              </div>
+              <p class="city-hint cloud-status" id="cloud-status"></p>
+            </section>
+
             <p class="page-hint">Cinsiyet, boy, kilo, ten ve şehrin önerileri kişiselleştirir.</p>
 
             <section class="profile-section">
@@ -181,11 +195,23 @@
             <section class="profile-section">
               <h2 class="profile-label">Ten rengi</h2>
               <div class="tone-grid" id="skin-tone-options" role="radiogroup" aria-label="Ten rengi"></div>
+              <div id="skin-avoid-host" class="skin-avoid-box hidden"></div>
             </section>
 
             <section class="profile-section">
               <h2 class="profile-label">Vücut tipi</h2>
               <div class="body-grid" id="body-type-options" role="radiogroup" aria-label="Vücut tipi"></div>
+            </section>
+
+            <section class="profile-section" id="style-quiz-section">
+              <h2 class="profile-label">Stil profili testi</h2>
+              <p class="city-hint">4 kısa soru — minimal, sportif, klasik vb.</p>
+              <div id="style-quiz-host"></div>
+            </section>
+
+            <section class="profile-section" id="color-report-section">
+              <h2 class="profile-label">Dolap renk raporu</h2>
+              <div id="color-report-host"></div>
             </section>
 
             <p class="profile-note" id="profile-note">Seçimlerin kaydedilir; Keşfet ve Kombin’de kullanılır.</p>
@@ -199,12 +225,39 @@
           </nav>
 
           <div class="app-toast hidden" id="app-toast" role="status"></div>
+
+          <div class="rename-sheet hidden" id="rename-sheet" role="dialog" aria-labelledby="rename-heading">
+            <button type="button" class="rename-backdrop" id="rename-backdrop" aria-label="Kapat"></button>
+            <div class="rename-panel">
+              <p class="rename-heading" id="rename-heading">Kombine isim ver</p>
+              <input
+                type="text"
+                class="rename-input"
+                id="rename-input"
+                maxlength="40"
+                placeholder="Ofis mavisi, Date night…"
+                autocomplete="off"
+              />
+              <div class="rename-chips" id="rename-chips">
+                <button type="button" class="rename-chip" data-name="Ofis mavisi">Ofis mavisi</button>
+                <button type="button" class="rename-chip" data-name="Date night">Date night</button>
+                <button type="button" class="rename-chip" data-name="Hafta sonu">Hafta sonu</button>
+                <button type="button" class="rename-chip" data-name="İş günü">İş günü</button>
+              </div>
+              <div class="rename-actions">
+                <button type="button" class="rename-btn ghost" id="rename-clear">Otomatik ad</button>
+                <button type="button" class="rename-btn" id="rename-cancel">İptal</button>
+                <button type="button" class="rename-btn primary" id="rename-save">Kaydet</button>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
       <div class="phone-shadow" aria-hidden="true"></div>
     </div>
   </div>
 
+  <script src="config.js"></script>
   <script src="app.js"></script>
 </body>
 </html>
